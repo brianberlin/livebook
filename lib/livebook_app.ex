@@ -32,7 +32,7 @@ if Mix.target() == :app do
       icon = :wxIcon.new(taskbar_icon_path, type: @wxBITMAP_TYPE_PNG)
 
       menu_items = [
-        {"Open Browser", key: "ctrl+o", id: @wxID_OPEN},
+        {"Open", key: "ctrl+o", id: @wxID_OPEN},
         {"Quit", key: "ctrl+q", id: @wxID_EXIT}
       ]
 
@@ -41,7 +41,7 @@ if Mix.target() == :app do
       if os == :windows do
         :wxTaskBarIcon.connect(taskbar, :taskbar_left_down,
           callback: fn _, _ ->
-            open_browser()
+            Desktop.Window.show(LivebookWindow)
           end
         )
       end
@@ -51,36 +51,35 @@ if Mix.target() == :app do
 
     @impl true
     def handle_info(:open_app, state) do
-      open_browser()
+      Desktop.Window.show(LiveBookWindow)
       {:noreply, state}
     end
 
     @impl true
     def handle_info({:open_file, path}, state) do
-      path
-      |> Livebook.Utils.notebook_open_url()
-      |> open_browser()
+      url = Livebook.Utils.notebook_open_url(path)
+      Desktop.Window.show(LiveBookWindow, url)
 
       {:noreply, state}
     end
 
     @impl true
     def handle_info({:open_url, "livebook://" <> rest}, state) do
-      "https://#{rest}"
-      |> Livebook.Utils.notebook_import_url()
-      |> open_browser()
+      url = Livebook.Utils.notebook_import_url("https://#{rest}")
+      Desktop.Window.show(LiveBookWindow, url)
 
       {:noreply, state}
     end
 
     @impl true
     def handle_info({:wx, @wxID_EXIT, _, _, _}, _state) do
+      Desktop.Window.hide(LiveBookWindow)
       System.stop(0)
     end
 
     @impl true
     def handle_info({:wx, @wxID_OPEN, _, _, _}, state) do
-      open_browser()
+      Desktop.Window.show(LiveBookWindow)
       {:noreply, state}
     end
 
@@ -90,10 +89,6 @@ if Mix.target() == :app do
         IO.inspect(event)
         {:noreply, state}
       end
-    end
-
-    defp open_browser(url \\ LivebookWeb.Endpoint.access_url()) do
-      Livebook.Utils.browser_open(url)
     end
   end
 

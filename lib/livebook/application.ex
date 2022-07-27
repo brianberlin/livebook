@@ -42,6 +42,7 @@ defmodule Livebook.Application do
           {LivebookWeb.Endpoint, log_access_url: false}
         ] ++ app_specs()
 
+
     opts = [strategy: :one_for_one, name: Livebook.Supervisor]
 
     case Supervisor.start_link(children, opts) do
@@ -197,7 +198,16 @@ defmodule Livebook.Application do
   defp config_env_var?(_), do: false
 
   if Mix.target() == :app do
-    defp app_specs, do: [LivebookApp]
+    defp app_specs, do: [
+      LivebookApp,
+      {Desktop.Window,
+      [
+          app: :livebook,
+          id: LiveBookWindow,
+          url: &LivebookWeb.Endpoint.url/0,
+          hidden: true
+      ]}
+    ]
   else
     defp app_specs, do: []
   end
